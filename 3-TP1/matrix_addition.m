@@ -2,7 +2,7 @@
 
 function C = matrix_addition(A, B)
     % Vérifier que les matrices ont la même taille
-    if size(A) ~= size(B)
+    if ~isequal(size(A), size(B)) 
         error('Les matrices doivent avoir la même taille');
     end
     

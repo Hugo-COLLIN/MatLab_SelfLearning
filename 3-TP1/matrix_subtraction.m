@@ -1,7 +1,8 @@
 % Fonction de soustraction de matrices avec limitation à 0
+
 function C = matrix_subtraction(A, B)
     % Vérifier que les matrices ont la même taille
-    if size(A) ~= size(B)
+    if ~isequal(size(A), size(B))
         error('Les matrices doivent avoir la même taille');
     end
     
