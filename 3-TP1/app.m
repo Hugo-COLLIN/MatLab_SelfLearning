@@ -420,17 +420,154 @@ subplot(1,3,3), imshow(opened_img), title('Ouverture');
 
 %% II.9. Reconnaissance de formes
 %% > Q17
+% Créer une image carrée de 100x100 pixels
+I = zeros(100,100);
+I(25:75, 25:75) = 1;
+
+% Calculer la transformée de Radon
+theta = 0:180;
+[R,xp] = radon(I,theta);
+
+% Affichée la transformée de radon
+figure
+iptsetpref('ImshowAxesVisible','on'); % Afficher l'échelle des axes sur l'image
+imshow(R,[],'Xdata',theta,'Ydata',xp,'InitialMagnification','fit')
+xlabel('\theta (degrees)')
+ylabel('x''')
+colormap(gca,hot), colorbar
+iptsetpref('ImshowAxesVisible','off'); % Masquer l'échelle des axes
+
+% Q17: La fonction radon calcule la transformée de Radon d'une image en 
+% projetant celle-ci le long de rayons orientés selon différents angles. 
+% Pour chaque angle, elle somme les intensités des pixels le long de lignes
+% perpendiculaires à la direction de projection.
 
 
 
 
+%% > Q18
+% Calcul de la signature : somme des carrés de chaque colonne
+function signature = calculerSignature1D(R)
+    % R est la matrice de Radon
+    signature = sum(R.^2, 1);
+end
+
+% Création de l'image carrée
+I = zeros(100);
+I(25:75, 25:75) = 1;
+
+% Calcul de la transformée de Radon
+theta = 0:180;
+[R,xp] = radon(I,theta);
+
+% Calcul de la signature 1D
+signature = calculerSignature1D(R);
+
+% Afficher la signature
+figure;
+plot(theta, signature);
+title('Signature 1D');
+xlabel('\theta (degrés)');
+ylabel('Intensité');
+
+% Affichage de l'image originale, de la transformée de Radon et de la signature
+% figure;
+% subplot(3,1,1);
+% imshow(I);
+% title('Image originale');
+% 
+% subplot(3,1,2);
+% iptsetpref('ImshowAxesVisible','on'); % Afficher l'échelle des axes sur l'image
+% imshow(R,[],'Xdata',theta,'Ydata',xp,'InitialMagnification','fit')
+% title('Transformée de Radon')
+% xlabel('\theta (degrees)')
+% ylabel('x''')
+% colormap(gca,hot), colorbar
+% iptsetpref('ImshowAxesVisible','off'); % Masquer l'échelle des axes
+% 
+% subplot(3,1,3);
+% plot(theta, signature);
+% title('Signature 1D');
+% xlabel('\theta (degrés)');
+% ylabel('Intensité');
+
+
+%% > Q19
+I_rotated = imrotate(I, 56, 'crop');
+I_resized = imresize(I, 1.25, 'nearest');
+
+% Calcul des transformées de Radon et des signatures
+[R_rotated, ~] = radon(I_rotated, theta);
+[R_resized, ~] = radon(I_resized, theta);
+
+signature_rotated = calculerSignature1D(R_rotated);
+signature_resized = calculerSignature1D(R_resized);
+
+% Affichage des signatures
+figure;
+plot(theta, signature, 'b', theta, signature_rotated, 'r', theta, signature_resized, 'g');
+legend('Original', 'Tourné 56°', 'Zoom 1.25');
+xlabel('\theta (degrés)');
+ylabel('Intensité');
+title('Comparaison des signatures 1D');
+
+
+% Q19: 
+% - La signature du carré original présente des pics importants à 0°, 90° et 180°
+% correspondant aux côtés du carré, des pics très faibles à 45° et 135°, 
+% ainsi que des creux à 30°, 60°, 120° et 150°
+% correspondant aux diagonales.
+% - Pour le carré tourné à 56°, les pics et creux sont décalés de 
+% 56° par rapport à la signature du carré d'origine, tout en conservant 
+% la forme générale de la signature.
+% - Pour le carré zoomé à 1.25, la forme générale de la signature est
+% identique à celle du carré original, mais l'intensité moyenne est
+% beaucoup plus importante (facteur 2.5 environ).
+
+% On en retire donc que :
+% - La rotation de l'image se traduit par un décalage de la signature dans l'espace angulaire.
+% - Le changement d'échelle (zoom) affecte principalement l'amplitude de la signature, tout en préservant sa forme générale.
+% On en conclut donc que la signature 1D basée sur la transformée de Radon est invariante par translation, mais sensible aux rotations et aux changements d'échelle.
 
 
 
+%% > Q20 : Calculer la R-signature d'un disque
+
+% 1-Créez une image contenant un disque blanc :
+I = zeros(100, 100,3);
+center = [50, 50];
+radius = 25;
+I = insertShape(I, 'FilledCircle', [center, radius], 'Color', 'white', 'Opacity', 1);
+I = rgb2gray(I);
+I = im2double(I);
+
+% 2-Calculez la transformée de Radon
+theta = 0:180;
+[R, xp] = radon(I, theta);
+
+% 3-Calculez la R-signature
+signature = calculerSignature1D(R);
+
+% Affichage
+figure;
+subplot(2,1,1);
+imshow(I);
+title('Image du disque');
+
+subplot(2,1,2);
+plot(theta, signature);
+title('R-signature du disque');
+xlabel('\theta (degrés)');
+ylabel('Intensité');
 
 
+% Q20: Dans un cercle parfait, la signature devrait être constante pour tous
+% les angles. Cependant, insertShape produit un cercle de basse résolution, 
+% ce qui entraine des variations dans la signature, en particulier des pics 
+% hauts à 45°, 135° et un pic bas à 90° (8.4563*10^4).
 
 
+%%
 
 % (La solution la plus efficace pour fermer les trous de l'image serait 
 % d'utiliser la fermeture morphologique (fonction imclose()), une technique 
@@ -446,7 +583,6 @@ subplot(1,2,1), imshow(morpho_img), title('Image originale');
 subplot(1,2,2), imshow(closed_img), title('Image après fermeture');
 
 
-%% > Q15
 
 
 %%
