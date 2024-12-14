@@ -1,3 +1,11 @@
+%% 0
+clc; clear;
+
+
+s(10)
+s(100)
+s(1000)
+
 %% I.1. Binarize
 clc; clear;
 I = imread('Images\Officer.png');
@@ -24,10 +32,10 @@ crop_region = [0, 0, 400, 400];
 Street_Malte_cropped = imcrop(Street_Malte, crop_region);
 Officer_cropped = imcrop(Officer, crop_region);
 
-I_add = matrix_addition(Street_Malte_cropped, Officer_cropped);
-I_sub = matrix_subtraction(Street_Malte_cropped, Officer_cropped);
-SM_iv = video_inverse(Street_Malte);
-O_iv = video_inverse(Officer);
+I_add = addition(Street_Malte_cropped, Officer_cropped);
+I_sub = soustraction(Street_Malte_cropped, Officer_cropped);
+SM_iv = inverse_video(Street_Malte);
+O_iv = inverse_video(Officer);
 
 figure;
 subplot(2,2,1); imshow(I_add); title('Addition');
@@ -72,7 +80,7 @@ subplot(3,2,5), imshow(I2), title('histeq'), subplot(3,2,6), imhist(I2);
 % sur tout le spectre, avec légèrement plus de valeurs dans les
 % hautes intensités.
 % - Avec `histeq`, l'image est dans un niveau de gris intermédiaire mais 
-% est plusgranuleuse. Les intensités sont plus espacées, comprises entre 0 4
+% est plus granuleuse. Les intensités sont plus espacées, comprises entre 0
 % et 120. On observe également un pic à 180 environ.
 
 
@@ -353,18 +361,18 @@ title('Position du Motif Détecté');
 
 %% II.8. Morpho-math
 %% > Q14
-morpho_img = imread('Images\Morpho.tif');
+Morpho = imread('Images\Morpho.tif');
 % figure, imshow(morpho_img);
 
 % Définir l'élément structurant carré
 SE = ones(3,3);
 
 % Réaliser la dilatation
-dilated_img = imdilate(morpho_img, SE);
+Morpho_dilatee = imdilate(Morpho, SE);
 
 figure;
-subplot(1,2,1), imshow(morpho_img), title('Image originale');
-subplot(1,2,2), imshow(dilated_img), title('Image dilatée');
+subplot(1,2,1), imshow(Morpho), title('Image originale');
+subplot(1,2,2), imshow(Morpho_dilatee), title('Image dilatée');
 
 % Q14: On observe que la dilatation permet d'étendre légèrement les zones
 % blanches de l'image, mais ne ferme pas entièrement les trous.
@@ -374,12 +382,12 @@ subplot(1,2,2), imshow(dilated_img), title('Image dilatée');
 
 %% > Q15
 % Réaliser l'érosion
-eroded_img = imerode(morpho_img, SE);
+Morpho_erodee = imerode(Morpho, SE);
 
 % Afficher les images
 figure;
-subplot(1,2,1), imshow(morpho_img), title('Image originale');
-subplot(1,2,2), imshow(eroded_img), title('Image érodée');
+subplot(1,2,1), imshow(Morpho), title('Image originale');
+subplot(1,2,2), imshow(Morpho_erodee), title('Image érodée');
 
 % Q15: L'érosion a l'effet inverse de la dilatation. On constate que les 
 % zones blanches de l'image sont réduites, tandis que les trous noirs sont 
@@ -397,16 +405,16 @@ subplot(1,2,2), imshow(eroded_img), title('Image érodée');
 
 %% > Q16
 % Dilatation suivie d'érosion (fermeture)
-closed_img = imerode(imdilate(morpho_img, SE), SE);
+Morpho_fermeture = imerode(imdilate(Morpho, SE), SE);
 
 % Érosion suivie de dilatation (ouverture)
-opened_img = imdilate(imerode(morpho_img, SE), SE);
+Morpho_ouverture = imdilate(imerode(Morpho, SE), SE);
 
 % Afficher les résultats
 figure;
-subplot(1,3,1), imshow(morpho_img), title('Image originale');
-subplot(1,3,2), imshow(closed_img), title('Fermeture');
-subplot(1,3,3), imshow(opened_img), title('Ouverture');
+subplot(1,3,1), imshow(Morpho), title('Image originale');
+subplot(1,3,2), imshow(Morpho_fermeture), title('Fermeture');
+subplot(1,3,3), imshow(Morpho_ouverture), title('Ouverture');
 
 
 % Q16: On remarque que :
@@ -423,13 +431,14 @@ subplot(1,3,3), imshow(opened_img), title('Ouverture');
 % Créer une image carrée de 100x100 pixels
 I = zeros(100,100);
 I(25:75, 25:75) = 1;
+figure, imshow(I);
 
 % Calculer la transformée de Radon
 theta = 0:180;
 [R,xp] = radon(I,theta);
 
 % Affichée la transformée de radon
-figure
+figure;
 iptsetpref('ImshowAxesVisible','on'); % Afficher l'échelle des axes sur l'image
 imshow(R,[],'Xdata',theta,'Ydata',xp,'InitialMagnification','fit')
 xlabel('\theta (degrees)')
@@ -447,21 +456,21 @@ iptsetpref('ImshowAxesVisible','off'); % Masquer l'échelle des axes
 
 %% > Q18
 % Calcul de la signature : somme des carrés de chaque colonne
-function signature = calculerSignature1D(R)
+function signature = R_sig(R)
     % R est la matrice de Radon
     signature = sum(R.^2, 1);
 end
 
-% Création de l'image carrée
-I = zeros(100);
-I(25:75, 25:75) = 1;
+% Création de l'image d'un rectangle
+I = ones(50, 100);
 
 % Calcul de la transformée de Radon
 theta = 0:180;
 [R,xp] = radon(I,theta);
 
 % Calcul de la signature 1D
-signature = calculerSignature1D(R);
+signature = R_sig(R);
+disp(signature);
 
 % Afficher la signature
 figure;
@@ -493,15 +502,15 @@ ylabel('Intensité');
 
 
 %% > Q19
-I_rotated = imrotate(I, 56, 'crop');
-I_resized = imresize(I, 1.25, 'nearest');
+I_56 = imrotate(I, 56, 'crop');
+I_zoom = imresize(I, 1.25, 'nearest');
 
 % Calcul des transformées de Radon et des signatures
-[R_rotated, ~] = radon(I_rotated, theta);
-[R_resized, ~] = radon(I_resized, theta);
+[R_rotated, ~] = radon(I_56, theta);
+[R_resized, ~] = radon(I_zoom, theta);
 
-signature_rotated = calculerSignature1D(R_rotated);
-signature_resized = calculerSignature1D(R_resized);
+signature_rotated = R_sig(R_rotated);
+signature_resized = R_sig(R_resized);
 
 % Affichage des signatures
 figure;
@@ -534,25 +543,23 @@ title('Comparaison des signatures 1D');
 %% > Q20 : Calculer la R-signature d'un disque
 
 % 1-Créez une image contenant un disque blanc :
-I = zeros(100, 100,3);
+I = zeros(100, 100, 3);
 center = [50, 50];
 radius = 25;
 I = insertShape(I, 'FilledCircle', [center, radius], 'Color', 'white', 'Opacity', 1);
 I = rgb2gray(I);
-I = im2double(I);
 
 % 2-Calculez la transformée de Radon
 theta = 0:180;
 [R, xp] = radon(I, theta);
 
 % 3-Calculez la R-signature
-signature = calculerSignature1D(R);
+signature = R_sig(R);
 
 % Affichage
 figure;
 subplot(2,1,1);
 imshow(I);
-title('Image du disque');
 
 subplot(2,1,2);
 plot(theta, signature);
@@ -576,14 +583,120 @@ ylabel('Intensité');
 
 %% >> Fermeture morphologique
 SE_close = strel('square', 3);  % Élément structurant légèrement plus grand
-closed_img = imclose(morpho_img, SE_close);
+Morpho_fermeture = imclose(Morpho, SE_close);
 
 figure;
-subplot(1,2,1), imshow(morpho_img), title('Image originale');
-subplot(1,2,2), imshow(closed_img), title('Image après fermeture');
+subplot(1,2,1), imshow(Morpho), title('Image originale');
+subplot(1,2,2), imshow(Morpho_fermeture), title('Image après fermeture');
 
 
 
 
 %%
 imshow(Ing)
+
+
+
+
+%% TP noté
+
+%% > Q20 : Calculer la R-signature d'un disque
+
+% Création d'un cercle parfait
+size = 100;
+center = [size/2, size/2];
+radius = 25;
+
+[X, Y] = meshgrid(1:size, 1:size);
+I = (X - center(1)).^2 + (Y - center(2)).^2 <= radius^2;
+I = double(I);
+
+% 2-Calculez la transformée de Radon
+theta = 0:180;
+[R, xp] = radon(I, theta);
+
+% 3-Calculez la R-signature
+signature = R_sig(R);
+
+% Affichage
+figure;
+subplot(2,1,1);
+imshow(I);
+title('Image du disque');
+
+subplot(2,1,2);
+plot(theta, signature);
+title('R-signature du disque');
+xlabel('\theta (degrés)');
+ylabel('Intensité')
+
+%% > Q20 : Calculer la R-signature d'un disque
+
+% Création d'un cercle avec anti-aliasing
+size = 100;
+center = [size/2, size/2];
+radius = 25;
+
+[X, Y] = meshgrid(1:size, 1:size);
+distance = sqrt((X - center(1)).^2 + (Y - center(2)).^2);
+I = 1 - min(max(distance - radius + 0.5, 0), 1);
+
+% 2-Calculez la transformée de Radon
+theta = 0:180;
+[R, xp] = radon(I, theta);
+
+% 3-Calculez la R-signature
+signature = R_sig(R);
+
+% Affichage
+figure;
+subplot(2,1,1);
+imshow(I);
+title('Image du disque');
+
+subplot(2,1,2);
+plot(theta, signature);
+title('R-signature du disque');
+xlabel('\theta (degrés)');
+ylabel('Intensité');
+
+
+
+%% Création d'un cercle parfait
+size = 100; 
+center = [size/2, size/2]; 
+radius = 25;
+
+[X, Y] = meshgrid(1:size, 1:size);
+dist_to_center = sqrt((X - center(1)).^2 + (Y - center(2)).^2);
+I = dist_to_center <= radius;  % Le disque binaire
+I = double(I);
+
+% Option 1: Lissage des bords (pour éviter les pixels "carrés")
+% h = fspecial('gaussian', [5 5], 1); % Filtre gaussien de taille 5x5 et écart-type 1
+% I = imfilter(I, h, 'replicate');
+
+% Option 2 (alternative) : Utiliser la fonction insertShape
+I = zeros(size, size); % Image vide
+I = insertShape(I, 'FilledCircle', [center radius], 'Color', 'white');
+I = rgb2gray(I); % Convertir l'image RVB en niveaux de gris
+I = I / max(I(:)); % Normaliser entre 0 et 1
+
+% 2- Calcul de la transformée de Radon
+theta = 0:180;
+[R, xp] = radon(I, theta);
+
+% 3- Calcul de la R-signature
+signature = R_sig(R);
+
+% Affichage
+figure;
+subplot(2,1,1);
+imshow(I, []);
+title('Image du disque parfait');
+
+subplot(2,1,2);
+plot(theta, signature);
+title('R-signature du disque');
+xlabel('\theta (degrés)');
+ylabel('Intensité');

@@ -1,6 +1,6 @@
 % Fonction d'addition de matrices avec limitation à 255
 
-function C = matrix_addition(A, B)
+function C = addition(A, B)
     % Vérifier que les matrices ont la même taille
     if ~isequal(size(A), size(B)) 
         error('Les matrices doivent avoir la même taille');
